@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>扭蛋抽獎</title>
+<style>
+  :root{ --gold1:#fff1b8; --gold2:#f2c14e; --gold3:#b87a14; --red:#d8141f; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:#070304;cursor:default;user-select:none}
+  body{font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+  #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;overflow:hidden;
+    background:
+      radial-gradient(ellipse 900px 700px at 50% 52%, #6b0d15 0%, #3a070b 38%, #160405 70%, #0b0304 100%);}
+  /* 地板 */
+  #floor{position:absolute;left:0;right:0;bottom:0;height:260px;
+    background:radial-gradient(ellipse 760px 120px at 50% 85%, rgba(255,90,90,.18), transparent 70%),
+               linear-gradient(to bottom, transparent, rgba(0,0,0,.55));}
+  /* 背景慢轉光芒 */
+  #bgRays{position:absolute;left:50%;top:52%;width:2400px;height:2400px;margin:-1200px 0 0 -1200px;opacity:.16;
+    background:repeating-conic-gradient(from 0deg, rgba(255,210,120,.55) 0 6deg, transparent 6deg 18deg);
+    -webkit-mask:radial-gradient(circle, #000 0, transparent 60%); mask:radial-gradient(circle, #000 0, transparent 60%);
+    animation:spin 90s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spark{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffe7a0;box-shadow:0 0 10px 3px rgba(255,210,120,.7);opacity:0;animation:tw 3s ease-in-out infinite}
+  @keyframes tw{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:.9;transform:scale(1)}}
+
+  #title{position:absolute;top:24px;left:0;right:0;text-align:center;font-size:78px;font-weight:900;letter-spacing:.08em;
+    background:linear-gradient(180deg,var(--gold1) 10%,var(--gold2) 55%,var(--gold3) 95%);-webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 6px 0 #5a0a0e) drop-shadow(0 0 30px rgba(255,180,80,.35))}
+  #hint{position:absolute;top:124px;left:0;right:0;text-align:center;color:#ffe3b0;font-size:28px;font-weight:700;letter-spacing:.12em;transition:opacity .3s}
+  #hint span{display:inline-block;animation:pulse 1.6s ease-in-out infinite}
+  #hint kbd{display:inline-block;font:inherit;font-size:24px;padding:2px 16px;margin:0 8px;border:2px solid #ffe3b0;border-radius:10px}
+  @keyframes pulse{50%{opacity:.45}}
+
+  #machine{position:absolute;left:660px;top:180px;width:600px;height:900px;overflow:visible}
+  #machine .handle{transform-box:fill-box;transform-origin:center}
+  #machine .jig{transform-box:fill-box;transform-origin:center}
+
+  .dragon{position:absolute;bottom:30px;filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));transform-origin:50% 100%}
+  .bob{animation:bob 2.4s ease-in-out infinite}
+  .bob2{animation:bob 2.8s ease-in-out -1.2s infinite}
+  @keyframes bob{50%{translate:0 -14px}}
+  #dL{left:120px;height:520px}
+  #dR{right:90px;height:620px}
+
+  #veil{position:absolute;inset:0;background:radial-gradient(circle at 50% 48%, rgba(40,4,6,.55), rgba(0,0,0,.88));opacity:0;pointer-events:none}
+  #burst{position:absolute;left:960px;top:500px;width:1900px;height:1900px;margin:-950px 0 0 -950px;opacity:0;pointer-events:none;
+    background:repeating-conic-gradient(from 0deg, rgba(255,214,110,.9) 0 5deg, transparent 5deg 15deg);
+    -webkit-mask:radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 52%); mask:radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 52%)}
+  #burst.on{animation:spin 18s linear infinite}
+  #glow{position:absolute;left:960px;top:500px;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;opacity:0;pointer-events:none;
+    background:radial-gradient(circle, rgba(255,236,170,.95) 0, rgba(255,190,80,.45) 25%, transparent 62%)}
+
+  /* 大扭蛋 */
+  #cap{position:absolute;left:0;top:0;width:140px;height:140px;opacity:0;pointer-events:none;will-change:transform}
+  #cap .half{position:absolute;left:0;width:140px;height:70px;overflow:hidden}
+  #cap .top{top:0;border-radius:70px 70px 0 0;background:radial-gradient(circle at 34% 40%, var(--c1) 0, var(--c2) 45%, var(--c3) 100%);
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+  #cap .top::after{content:"";position:absolute;left:26px;top:16px;width:36px;height:20px;border-radius:50%;background:rgba(255,255,255,.65);transform:rotate(-25deg)}
+  #cap .bot{top:70px;border-radius:0 0 70px 70px;background:radial-gradient(circle at 40% 0%, #ffffff 0, #f2eeee 45%, #c9c1c1 100%)}
+  #cap .bot::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;background:rgba(0,0,0,.18)}
+  #cap .shadow{position:absolute;left:10px;top:150px;width:120px;height:18px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(6px)}
+
+  #flash{position:absolute;inset:0;background:#fff8e2;opacity:0;pointer-events:none}
+
+  /* 開獎卡 */
+  #card{position:absolute;left:960px;top:520px;width:1040px;margin-left:-520px;transform:translateY(-50%) scale(.2);opacity:0;pointer-events:none;
+    padding:48px 60px 54px;border-radius:40px;text-align:center;
+    background:radial-gradient(ellipse at 50% 0%, #a3121b 0%, #6a0910 55%, #3d0408 100%);
+    box-shadow:0 0 0 6px #f2c14e, 0 0 0 12px #6a0910, 0 0 0 16px #b87a14, 0 30px 80px rgba(0,0,0,.6), 0 0 120px rgba(255,190,80,.45)}
+  #card .lead{font-size:52px;font-weight:900;letter-spacing:.3em;color:#ffd977;margin-bottom:16px;text-indent:.3em}
+  #card .name{font-size:150px;line-height:1.18;font-weight:900;color:#fff;word-break:break-word;
+    text-shadow:0 6px 0 rgba(0,0,0,.35), 0 0 40px rgba(255,210,120,.5)}
+  #card .no{margin-top:22px;font-size:26px;color:rgba(255,230,190,.7);letter-spacing:.2em}
+  .rd{position:absolute;bottom:-30px;height:660px;opacity:0;filter:drop-shadow(0 18px 30px rgba(0,0,0,.6));pointer-events:none}
+  #rL{left:-10px} #rR{right:-10px}
+
+  #msg{position:absolute;left:960px;top:560px;transform:translate(-50%,-50%);padding:26px 54px;border-radius:24px;
+    background:rgba(20,4,6,.85);border:3px solid #f2c14e;color:#ffe9b8;font-size:54px;font-weight:900;letter-spacing:.1em;white-space:nowrap;
+    opacity:0;transition:opacity .4s;pointer-events:none}
+  #msg.show{opacity:1}
+  #fx{position:absolute;inset:0;pointer-events:none}
+  #fsHint{position:fixed;right:14px;bottom:10px;color:rgba(255,255,255,.25);font-size:13px;font-family:system-ui;transition:opacity 1s}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="bgRays"></div>
+  <div id="floor"></div>
+  <div id="sparks"></div>
+
+  <div id="title">LUCKY 扭蛋機</div>
+  <div id="hint"><span>按 <kbd>空白鍵</kbd> 轉動扭蛋</span></div>
+
+  <img id="dL" class="dragon bob2" src="assets/dragon_stand.webp" alt="">
+  <img id="dR" class="dragon bob" src="assets/dragon_wave.webp" alt="">
+
+  <svg id="machine" viewBox="0 0 600 900">
+    <defs>
+      <radialGradient id="gGlass" cx="38%" cy="32%" r="75%">
+        <stop offset="0" stop-color="#ffffff" stop-opacity=".30"/>
+        <stop offset=".5" stop-color="#ffffff" stop-opacity=".06"/>
+        <stop offset="1" stop-color="#bfe3ff" stop-opacity=".22"/>
+      </radialGradient>
+      <linearGradient id="gBody" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#8e0910"/><stop offset=".18" stop-color="#e01722"/>
+        <stop offset=".42" stop-color="#ff4a4f"/><stop offset=".7" stop-color="#d8141f"/><stop offset="1" stop-color="#7a070d"/>
+      </linearGradient>
+      <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#8b8b94"/><stop offset=".25" stop-color="#f4f4f7"/>
+        <stop offset=".55" stop-color="#bdbdc6"/><stop offset=".8" stop-color="#ececf1"/><stop offset="1" stop-color="#7d7d86"/>
+      </linearGradient>
+      <linearGradient id="gGold" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#9c6512"/><stop offset=".3" stop-color="#ffe08a"/>
+        <stop offset=".6" stop-color="#e3a72f"/><stop offset="1" stop-color="#8f5c10"/>
+      </linearGradient>
+      <radialGradient id="gKnob" cx="40%" cy="35%" r="70%">
+        <stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#cfcfd8"/><stop offset="1" stop-color="#7d7d88"/>
+      </radialGradient>
+      <clipPath id="clipGlobe"><circle cx="300" cy="290" r="226"/></clipPath>
+    </defs>
+
+    <!-- 頂蓋 -->
+    <ellipse cx="300" cy="78" rx="86" ry="22" fill="url(#gGold)"/>
+    <path d="M222 78 Q300 2 378 78 Z" fill="url(#gBody)"/>
+    <circle cx="300" cy="22" r="16" fill="url(#gGold)"/>
+
+    <!-- 玻璃球 -->
+    <circle cx="300" cy="290" r="232" fill="rgba(255,255,255,.05)"/>
+    <g id="pile" clip-path="url(#clipGlobe)"></g>
+    <circle cx="300" cy="290" r="232" fill="url(#gGlass)" stroke="url(#gMetal)" stroke-width="10"/>
+    <path d="M128 230 A182 182 0 0 1 250 112" stroke="#fff" stroke-opacity=".55" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M118 290 A182 182 0 0 1 121 262" stroke="#fff" stroke-opacity=".45" stroke-width="12" fill="none" stroke-linecap="round"/>
+
+    <!-- 頸部 -->
+    <rect x="160" y="500" width="280" height="40" rx="10" fill="url(#gMetal)"/>
+    <rect x="128" y="532" width="344" height="24" rx="12" fill="url(#gGold)"/>
+
+    <!-- 機身 -->
+    <rect x="106" y="550" width="388" height="300" rx="36" fill="url(#gBody)"/>
+    <rect x="106" y="550" width="388" height="300" rx="36" fill="none" stroke="#5a0509" stroke-width="3" opacity=".6"/>
+    <text x="300" y="598" text-anchor="middle" font-size="28" font-weight="900" letter-spacing="8" fill="#ffe08a"
+          font-family="Arial Black, Noto Sans TC, sans-serif">LUCKY</text>
+
+    <!-- 轉把 -->
+    <g class="handle" id="handle">
+      <circle cx="300" cy="680" r="66" fill="#5a0509" opacity=".5"/>
+      <circle cx="300" cy="676" r="62" fill="url(#gKnob)" stroke="#6b6b75" stroke-width="3"/>
+      <rect x="244" y="664" width="112" height="24" rx="12" fill="url(#gGold)" stroke="#8f5c10" stroke-width="2"/>
+      <circle cx="300" cy="676" r="15" fill="#d8141f" stroke="#7a070d" stroke-width="3"/>
+    </g>
+
+    <!-- 出口 -->
+    <rect x="232" y="768" width="136" height="64" rx="20" fill="url(#gMetal)"/>
+    <rect x="242" y="776" width="116" height="48" rx="14" fill="#1a0204"/>
+    <path d="M246 790 Q300 772 354 790 L354 782 Q300 768 246 782 Z" fill="rgba(255,255,255,.18)"/>
+
+    <!-- 底座 -->
+    <rect x="92" y="846" width="416" height="34" rx="14" fill="#3a0609"/>
+    <rect x="92" y="846" width="416" height="10" rx="5" fill="url(#gGold)" opacity=".85"/>
+  </svg>
+
+  <div id="veil"></div>
+  <div id="burst"></div>
+  <div id="glow"></div>
+
+  <img id="rL" class="rd" src="assets/lucky_open.webp" alt="">
+  <img id="rR" class="rd" src="assets/lucky_thumbs.webp" alt="">
+
+  <div id="card"><div class="lead">恭喜獲得</div><div class="name" id="prizeName"></div><div class="no" id="drawNo"></div></div>
+
+  <div id="cap"><div class="shadow"></div><div class="half bot"></div><div class="half top"></div></div>
+
+  <div id="msg"></div>
+  <canvas id="fx" width="1920" height="1080"></canvas>
+  <div id="flash"></div>
+</div>
+<div id="fsHint">F：全螢幕</div>
+
+<script src="store.js"></script>
+<script>
+const S = window.GachaStore;
+const $ = id => document.getElementById(id);
+const stage = $('stage');
+const A = n => `assets/${n}.webp`;
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const rand = (a,b) => a + Math.random()*(b-a);
+
+/* ---------- 畫面縮放 16:9 ---------- */
+function fit(){ const s = Math.min(innerWidth/1920, innerHeight/1080); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
+addEventListener('resize', fit); fit();
+
+/* ---------- 預載圖片 ---------- */
+['lucky_open','lucky_point','lucky_thumbs','lucky_fly','dragon_stand','dragon_talk','dragon_wave','dragon_tumble'].forEach(n => { const i = new Image(); i.src = A(n); });
+
+/* ---------- 背景星光 ---------- */
+(function(){ const box = $('sparks'); let h='';
+  for (let i=0;i<46;i++){ h += `<i class="spark" style="left:${rand(20,1900)}px;top:${rand(20,1000)}px;animation-delay:${rand(0,3).toFixed(2)}s;animation-duration:${rand(2.2,4.2).toFixed(2)}s"></i>`; }
+  box.innerHTML = h; })();
+
+/* ---------- 扭蛋配色 ---------- */
+const COLORS = [
+  ['#ff9aa0','#e8222d','#8f0a12'], ['#ffe9a3','#f2b631','#9a6510'], ['#a9d8ff','#2f86e0','#123f82'],
+  ['#b9f5c4','#2fb85a','#11602b'], ['#e2c2ff','#9447e0','#4b1a85'], ['#ffc2e6','#ec4fa6','#8a1d5c'],
+  ['#ffd2a8','#ff7a1f','#9a3d05']
+];
+
+/* ---------- 玻璃球裡的扭蛋堆 ---------- */
+const pile = $('pile');
+(function buildPile(){
+  const NS = 'http://www.w3.org/2000/svg'; const R = 33; let k = 0;
+  for (let row=0; row<6; row++){
+    const y = 486 - row*56;
+    const off = row%2 ? 33 : 0;
+    for (let x = 78 + off; x <= 522; x += 66){
+      const jx = x + rand(-6,6), jy = y + rand(-5,5);
+      if (Math.hypot(jx-300, jy-290) > 226 - R + 6) continue;
+      const c = COLORS[k++ % COLORS.length];
+      const outer = document.createElementNS(NS,'g'); outer.setAttribute('transform', `translate(${jx.toFixed(1)} ${jy.toFixed(1)}) rotate(${rand(-60,60).toFixed(0)})`);
+      const inner = document.createElementNS(NS,'g'); inner.setAttribute('class','jig');
+      inner.innerHTML = `<circle r="${R}" fill="#f4efef" stroke="rgba(0,0,0,.18)" stroke-width="1.5"/>
+        <path d="M${-R} 0 A${R} ${R} 0 0 1 ${R} 0 Z" fill="${c[1]}"/>
+        <path d="M${-R} 0 A${R} ${R} 0 0 1 ${R} 0" fill="none" stroke="${c[2]}" stroke-width="2" opacity=".5"/>
+        <line x1="${-R}" y1="0" x2="${R}" y2="0" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+        <ellipse cx="-11" cy="-15" rx="10" ry="5.5" fill="#fff" opacity=".6" transform="rotate(-25 -11 -15)"/>`;
+      outer.appendChild(inner); pile.appendChild(outer);
+    }
+  }
+})();
+
+/* ---------- 彩帶 ---------- */
+const fx = $('fx'), ctx = fx.getContext('2d'); let parts = [], fxRun = false;
+function confetti(n=220){
+  const cols = ['#ffd24a','#ff4a55','#ffffff','#4ab3ff','#6be08a','#ff8ad0','#ffb13b'];
+  for (let i=0;i<n;i++){
+    const a = rand(0, Math.PI*2), sp = rand(8, 26);
+    parts.push({ x:960, y:500, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - rand(4,10), w:rand(10,20), h:rand(6,12),
+      r:rand(0,6.28), vr:rand(-.3,.3), c:cols[i%cols.length], life:rand(140,220) });
+  }
+  if (!fxRun){ fxRun = true; requestAnimationFrame(tick); }
+}
+function tick(){
+  ctx.clearRect(0,0,1920,1080);
+  parts = parts.filter(p => p.life > 0 && p.y < 1150);
+  for (const p of parts){
+    p.vx *= .985; p.vy = p.vy*.985 + .38; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life--;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.min(1, p.life/40);
+    ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h*Math.abs(Math.cos(p.r*1.7))+2); ctx.restore();
+  }
+  if (parts.length) requestAnimationFrame(tick); else { fxRun = false; ctx.clearRect(0,0,1920,1080); }
+}
+
+/* ---------- 小工具 ---------- */
+const T = (x,y,s=1,r=0) => `translate(${x-70}px,${y-70}px) scale(${s}) rotate(${r}deg)`;
+function swap(img, name){
+  if (img.src.endsWith(A(name))) return;
+  img.src = A(name);
+  img.animate([{transform:'scale(.82,1.12)'},{transform:'scale(1.08,.94)'},{transform:'scale(1)'}],{duration:380,easing:'ease-out'});
+}
+function fade(el, to, ms=400){ return el.animate([{opacity:getComputedStyle(el).opacity},{opacity:to}],{duration:ms,fill:'forwards',easing:'ease'}).finished; }
+function fitName(el){
+  let fs = 150; el.style.fontSize = fs+'px';
+  while (fs > 52 && el.scrollHeight > fs*1.18*2 + 6){ fs -= 6; el.style.fontSize = fs+'px'; }
+}
+
+/* ---------- 狀態 ---------- */
+let state = 'idle', busy = false;
+const cap = $('cap'), card = $('card');
+
+function refreshIdle(){
+  const d = S.load();
+  $('title').textContent = (d.settings && d.settings.title) || 'LUCKY 扭蛋機';
+  if (state !== 'idle') return;
+  const msg = $('msg');
+  if (!d.prizes.length){ msg.textContent = '尚未匯入獎項，請先到後台匯入'; msg.classList.add('show'); $('hint').style.opacity = 0; swap($('dR'),'dragon_stand'); }
+  else if (!d.prizes.some(p => p.remaining > 0)){ msg.textContent = '🎉 獎品已全部抽完'; msg.classList.add('show'); $('hint').style.opacity = 0; swap($('dR'),'dragon_tumble'); }
+  else { msg.classList.remove('show'); $('hint').style.opacity = 1; swap($('dR'),'dragon_wave'); }
+}
+
+async function play(){
+  const res = S.draw();                       // 先寫入結果，動畫中途重新整理也不會漏記
+  if (!res){ refreshIdle(); return; }
+  busy = true; state = 'anim';
+  $('hint').style.opacity = 0; $('msg').classList.remove('show');
+  const dL = $('dL'), dR = $('dR');
+
+  /* 1. 轉把手 + 機器搖晃 */
+  swap(dL,'dragon_talk'); swap(dR,'lucky_point');
+  const SPIN = 2000;
+  $('handle').animate([{transform:'rotate(0deg)'},{transform:'rotate(810deg)'}],{duration:SPIN,easing:'cubic-bezier(.45,0,.25,1)'});
+  $('machine').animate([
+    {transform:'rotate(0deg)'},{transform:'rotate(-1.2deg)'},{transform:'rotate(1.2deg)'},{transform:'rotate(-1deg)'},
+    {transform:'rotate(1deg)'},{transform:'rotate(-.6deg)'},{transform:'rotate(.6deg)'},{transform:'rotate(0deg)'}],
+    {duration:SPIN, easing:'ease-in-out'});
+  pile.querySelectorAll('.jig').forEach(g => {
+    const k = []; for (let i=0;i<7;i++) k.push({transform:`translate(${rand(-14,14)}px,${rand(-22,8)}px) rotate(${rand(-40,40)}deg)`});
+    k.unshift({transform:'none'}); k.push({transform:'none'});
+    g.animate(k,{duration:SPIN, easing:'ease-in-out'});
+  });
+  await wait(SPIN);
+
+  /* 2. 扭蛋掉出來 */
+  const c = COLORS[Math.floor(Math.random()*COLORS.length)];
+  cap.style.setProperty('--c1',c[0]); cap.style.setProperty('--c2',c[1]); cap.style.setProperty('--c3',c[2]);
+  cap.querySelector('.top').style.cssText = ''; cap.querySelector('.bot').style.cssText = ''; cap.querySelector('.shadow').style.opacity = 1;
+  const drop = cap.animate([
+    {opacity:0, transform:T(960,978,.42,0)},
+    {opacity:1, transform:T(960,1004,.55,30), offset:.45},
+    {opacity:1, transform:T(960,984,.58,50), offset:.7},
+    {opacity:1, transform:T(960,1008,.6,70)}],
+    {duration:650, easing:'ease-in', fill:'forwards'});
+  swap(dL,'dragon_wave');
+  await drop.finished;
+  await wait(180);
+
+  /* 3. 龍飛撲、扭蛋飛到畫面中央 */
+  swap(dR,'lucky_fly');
+  dR.animate([{transform:'translate(0,0)'},{transform:'translate(-260px,-160px) rotate(-8deg)'},{transform:'translate(0,0)'}],{duration:1000,easing:'ease-in-out'});
+  fade($('veil'), 1, 900);
+  cap.querySelector('.shadow').style.opacity = 0;
+  await cap.animate([{transform:T(960,1008,.6,70)},{transform:T(960,500,2.6,720)}],
+    {duration:1000, easing:'cubic-bezier(.3,.1,.2,1)', fill:'forwards'}).finished;
+
+  /* 4. 醞釀：搖晃 + 光暈 */
+  fade($('glow'), .55, 1300);
+  await cap.animate([
+    {transform:T(960,500,2.6,720)},{transform:T(960,500,2.6,712)},{transform:T(960,500,2.6,728)},{transform:T(960,500,2.6,720)},
+    {transform:T(960,500,2.7,708)},{transform:T(960,500,2.7,732)},{transform:T(960,500,2.7,720)},
+    {transform:T(960,500,2.85,704)},{transform:T(960,500,2.85,736)},{transform:T(960,500,2.9,700)},{transform:T(960,500,2.9,740)},{transform:T(960,500,2.95,720)}],
+    {duration:1500, easing:'ease-in', fill:'forwards'}).finished;
+
+  /* 5. 開蛋！ */
+  $('flash').animate([{opacity:.9},{opacity:0}],{duration:500,easing:'ease-out'});
+  cap.querySelector('.top').animate([{transform:'none',opacity:1},{transform:'translate(-60px,-230px) rotate(-55deg)',opacity:0}],{duration:650,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
+  cap.querySelector('.bot').animate([{transform:'none',opacity:1},{transform:'translate(40px,200px) rotate(35deg)',opacity:0}],{duration:650,easing:'cubic-bezier(.4,0,.7,.4)',fill:'forwards'});
+  $('burst').classList.add('on'); fade($('burst'), 1, 500); fade($('glow'), .9, 300);
+  $('prizeName').textContent = res.prize.name;
+  $('drawNo').textContent = `第 ${res.entry.no} 抽`;
+  card.animate([{opacity:0, transform:'translateY(-50%) scale(.2)'},{opacity:1, transform:'translateY(-50%) scale(1.08)', offset:.7},{opacity:1, transform:'translateY(-50%) scale(1)'}],
+    {duration:620, easing:'cubic-bezier(.2,.8,.3,1.2)', fill:'forwards'});
+  fitName($('prizeName'));
+  confetti(240); setTimeout(()=>confetti(140), 380);
+  $('rL').animate([{opacity:0, transform:'translate(-200px,160px) rotate(-12deg)'},{opacity:1, transform:'none'}],{duration:600,delay:180,easing:'cubic-bezier(.2,.8,.3,1.3)',fill:'forwards'});
+  $('rR').animate([{opacity:0, transform:'translate(200px,160px) rotate(12deg)'},{opacity:1, transform:'none'}],{duration:600,delay:260,easing:'cubic-bezier(.2,.8,.3,1.3)',fill:'forwards'});
+  await wait(900);
+  state = 'result'; busy = false;
+}
+
+async function reset(){
+  busy = true;
+  const ms = 450;
+  card.animate([{opacity:1, transform:'translateY(-50%) scale(1)'},{opacity:0, transform:'translateY(-50%) scale(.85)'}],{duration:ms,fill:'forwards'});
+  fade($('rL'),0,ms); fade($('rR'),0,ms); fade($('burst'),0,ms); fade($('glow'),0,ms); fade($('veil'),0,ms);
+  cap.animate([{opacity:0},{opacity:0}],{duration:1,fill:'forwards'});
+  await wait(ms);
+  $('burst').classList.remove('on');
+  swap($('dL'),'dragon_stand');
+  state = 'idle'; busy = false;
+  refreshIdle();
+}
+
+function advance(){
+  if (busy) return;
+  if (state === 'idle') play();
+  else if (state === 'result') reset();
+}
+
+addEventListener('keydown', e => {
+  if ([' ','Enter','PageDown','ArrowRight','ArrowDown'].includes(e.key)){ e.preventDefault(); if (!e.repeat) advance(); }
+  else if (e.key === 'f' || e.key === 'F'){
+    if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(()=>{});
+  }
+});
+addEventListener('pointerdown', e => { if (e.button === 0) advance(); });
+addEventListener('storage', e => { if (e.key === S.KEY) refreshIdle(); });
+setTimeout(()=>{ $('fsHint').style.opacity = 0; }, 6000);
+refreshIdle();
+</script>
+</body>
+</html>

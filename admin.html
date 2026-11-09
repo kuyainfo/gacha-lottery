@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>扭蛋抽獎後台</title>
+<style>
+  :root{
+    --bg:#f4f1ee; --card:#fff; --ink:#1d1a1a; --muted:#7a716d; --line:#e6dfda;
+    --red:#d8141f; --red-d:#a80d16; --gold:#e3a72f; --ok:#1f8a4c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;font-size:15px}
+  header{background:#1a1213;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header h1{margin:0;font-size:20px;letter-spacing:.05em}
+  header h1 b{color:var(--gold)}
+  header .sp{flex:1}
+  main{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .card h2{margin:0 0 4px;font-size:17px}
+  .card .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  button,.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  button:hover,.btn:hover{border-color:#bdb2ab}
+  .primary{background:var(--red);border-color:var(--red);color:#fff}
+  .primary:hover{background:var(--red-d);border-color:var(--red-d)}
+  .gold{background:var(--gold);border-color:var(--gold);color:#2a1d05;font-weight:700}
+  .danger{color:var(--red);border-color:#f0c9cb}
+  .ghost-dark{background:transparent;color:#fff;border-color:#5a4a4b}
+  input[type=text],input[type=number],textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
+  textarea{min-height:110px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:13px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:760px){.grid2{grid-template-columns:1fr}}
+  .drop{border:2px dashed #d9cfc8;border-radius:12px;padding:22px;text-align:center;color:var(--muted);cursor:pointer;transition:.15s}
+  .drop.on,.drop:hover{border-color:var(--red);color:var(--red);background:#fff6f6}
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .stat{background:#faf7f5;border:1px solid var(--line);border-radius:10px;padding:8px 14px;min-width:120px}
+  .stat b{display:block;font-size:22px}
+  .stat span{font-size:12px;color:var(--muted)}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+  th{font-size:12px;color:var(--muted);font-weight:600}
+  td.n{width:40px;color:var(--muted)}
+  td.q{width:110px} td.r{width:110px} td.d{width:70px;text-align:center} td.x{width:60px;text-align:right}
+  tr.out td{opacity:.45}
+  .pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;background:#eef7f1;color:var(--ok)}
+  .pill.zero{background:#f6eeee;color:var(--red)}
+  .log{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .log table th{position:sticky;top:0;background:#faf7f5}
+  .empty{color:var(--muted);text-align:center;padding:24px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#1a1213;color:#fff;padding:10px 18px;border-radius:10px;transition:.25s;pointer-events:none;max-width:90vw}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>扭蛋抽獎 <b>後台</b></h1>
+  <div class="sp"></div>
+  <a class="btn gold" href="draw.html" target="_blank">開啟執行頁 ↗</a>
+</header>
+
+<main>
+  <!-- 匯入 -->
+  <section class="card">
+    <h2>① 匯入獎項</h2>
+    <p class="sub">只需要兩欄：A 欄「獎項名稱」、B 欄「數量」。匯入會<strong>取代</strong>目前的獎項清單。</p>
+    <div class="grid2">
+      <div>
+        <div class="drop" id="drop">
+          <div style="font-size:28px">📄</div>
+          <div><strong>拖曳 Excel / CSV 到這裡</strong>，或點一下選檔</div>
+          <div class="note">支援 .xlsx .xls .csv（讀第一個工作表）</div>
+        </div>
+        <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+        <div class="row" style="margin-top:10px">
+          <button id="tpl">下載匯入範本</button>
+        </div>
+      </div>
+      <div>
+        <textarea id="paste" placeholder="或直接從 Excel 選取兩欄複製，貼在這裡&#10;例如：&#10;iPad Air	2&#10;AirPods	5&#10;禮券 500 元	20"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button class="primary" id="pasteGo">匯入貼上的內容</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 獎項 -->
+  <section class="card">
+    <h2>② 獎項清單</h2>
+    <p class="sub">可以直接改名稱、數量、剩餘數。每個「還有剩」的品項中獎機率都一樣，抽完的品項自動退出。</p>
+    <div class="stats">
+      <div class="stat"><b id="sTypes">0</b><span>品項數</span></div>
+      <div class="stat"><b id="sLeftTypes">0</b><span>還有剩的品項</span></div>
+      <div class="stat"><b id="sLeft">0</b><span>剩餘獎品總數</span></div>
+      <div class="stat"><b id="sProb">—</b><span>目前每個品項中獎機率</span></div>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>獎項名稱</th><th>總數量</th><th>剩餘</th><th style="text-align:center">已抽</th><th></th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="row" style="margin-top:12px">
+      <button id="addRow">＋ 新增一項</button>
+    </div>
+  </section>
+
+  <!-- 紀錄 -->
+  <section class="card">
+    <h2>③ 抽獎紀錄</h2>
+    <p class="sub">執行頁每抽一次就會即時出現在這裡。</p>
+    <div class="row" style="margin-bottom:12px">
+      <button id="undo">↶ 撤銷最後一筆</button>
+      <button id="export">匯出紀錄 Excel</button>
+      <div style="flex:1"></div>
+      <button class="danger" id="resetDraw">重置抽獎（數量恢復、清空紀錄）</button>
+      <button class="danger" id="wipe">清空全部資料</button>
+    </div>
+    <div class="log"><table>
+      <thead><tr><th>抽次</th><th>獎項</th><th>時間</th></tr></thead>
+      <tbody id="logBody"></tbody>
+    </table></div>
+  </section>
+
+  <!-- 設定 -->
+  <section class="card">
+    <h2>④ 畫面設定</h2>
+    <div class="row">
+      <label style="min-width:80px">畫面標題</label>
+      <input type="text" id="title" style="max-width:420px" placeholder="LUCKY 扭蛋機">
+      <button id="saveTitle">儲存</button>
+    </div>
+    <p class="note">執行頁操作：空白鍵 / Enter / 簡報筆翻頁 / 滑鼠點擊 ＝ 開抽 &amp; 下一位；F ＝ 全螢幕。後台與執行頁請開在同一台電腦、同一個瀏覽器。</p>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="lib/xlsx.full.min.js"></script>
+<script src="store.js"></script>
+<script>
+const S = window.GachaStore;
+const $ = id => document.getElementById(id);
+let toastT;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- 渲染 ---------- */
+function render(){
+  const d = S.load();
+  const tb = $('tbody');
+  if (!d.prizes.length){
+    tb.innerHTML = '<tr><td colspan="6" class="empty">還沒有獎項，先從上方匯入</td></tr>';
+  } else {
+    tb.innerHTML = d.prizes.map((p,i)=>`
+      <tr data-id="${p.id}" class="${p.remaining<=0?'out':''}">
+        <td class="n">${i+1}</td>
+        <td><input type="text" data-f="name" value="${esc(p.name)}"></td>
+        <td class="q"><input type="number" min="0" data-f="qty" value="${p.qty}"></td>
+        <td class="r"><input type="number" min="0" data-f="remaining" value="${p.remaining}"></td>
+        <td class="d"><span class="pill ${p.remaining<=0?'zero':''}">${p.qty - p.remaining}</span></td>
+        <td class="x"><button class="danger" data-del="${p.id}" title="刪除">✕</button></td>
+      </tr>`).join('');
+  }
+  const leftTypes = d.prizes.filter(p=>p.remaining>0).length;
+  $('sTypes').textContent = d.prizes.length;
+  $('sLeftTypes').textContent = leftTypes;
+  $('sLeft').textContent = d.prizes.reduce((a,p)=>a+Math.max(0,p.remaining),0);
+  $('sProb').textContent = leftTypes ? (100/leftTypes).toFixed(1)+'%' : '—';
+
+  const lb = $('logBody');
+  if (!d.log.length) lb.innerHTML = '<tr><td colspan="3" class="empty">還沒有抽獎紀錄</td></tr>';
+  else lb.innerHTML = d.log.slice().reverse().map(l=>`<tr><td>${l.no}</td><td>${esc(l.name)}</td><td>${fmt(l.time)}</td></tr>`).join('');
+
+  if (document.activeElement !== $('title')) $('title').value = (d.settings && d.settings.title) || '';
+}
+function fmt(t){ const d=new Date(t); const p=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
+
+/* ---------- 匯入 ---------- */
+function rowsToPrizes(rows){
+  const out = []; const bad = []; const map = new Map();
+  rows.forEach((r,i)=>{
+    if (!r) return;
+    const name = String(r[0] ?? '').trim();
+    const qRaw = String(r[1] ?? '').replace(/[,\s]/g,'');
+    if (!name && !qRaw) return;
+    const q = parseInt(qRaw,10);
+    if (i===0 && isNaN(q)) return;              // 標題列
+    if (!name || isNaN(q) || q<=0){ bad.push(i+1); return; }
+    if (map.has(name)){ map.get(name).qty += q; map.get(name).remaining += q; return; }
+    const p = { id:S.uid(), name, qty:q, remaining:q };
+    map.set(name,p); out.push(p);
+  });
+  return { prizes: out, bad };
+}
+function applyImport(rows){
+  const { prizes, bad } = rowsToPrizes(rows);
+  if (!prizes.length){ toast('沒讀到有效資料：A 欄要是名稱、B 欄要是大於 0 的數字'); return; }
+  const d = S.load();
+  if ((d.prizes.length || d.log.length) && !confirm(`匯入會取代目前 ${d.prizes.length} 個品項，並清空 ${d.log.length} 筆抽獎紀錄。確定嗎？`)) return;
+  d.prizes = prizes; d.log = [];
+  S.save(d); render();
+  toast(`已匯入 ${prizes.length} 個品項` + (bad.length ? `（第 ${bad.join('、')} 列格式不對已略過）` : ''));
+}
+function readFile(f){
+  const rd = new FileReader();
+  rd.onload = e => {
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      applyImport(XLSX.utils.sheet_to_json(ws, { header:1, blankrows:false, defval:'' }));
+    }catch(err){ toast('檔案讀取失敗：' + err.message); }
+  };
+  rd.readAsArrayBuffer(f);
+}
+$('drop').onclick = () => $('file').click();
+$('file').onchange = e => { if (e.target.files[0]) readFile(e.target.files[0]); e.target.value=''; };
+['dragenter','dragover'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.add('on');}));
+['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.remove('on');}));
+$('drop').addEventListener('drop', e => { const f=e.dataTransfer.files[0]; if (f) readFile(f); });
+
+$('pasteGo').onclick = () => {
+  const txt = $('paste').value.trim();
+  if (!txt){ toast('先貼上內容'); return; }
+  const rows = txt.split(/\r?\n/).map(l => l.includes('\t') ? l.split('\t') : l.split(/,(?=[^,]*$)/));
+  applyImport(rows);
+  $('paste').value='';
+};
+$('tpl').onclick = () => {
+  const ws = XLSX.utils.aoa_to_sheet([['獎項名稱','數量'],['iPad Air',2],['AirPods',5],['禮券 500 元',20]]);
+  ws['!cols']=[{wch:28},{wch:10}];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '獎項');
+  XLSX.writeFile(wb, '扭蛋抽獎_匯入範本.xlsx');
+};
+
+/* ---------- 編輯 ---------- */
+$('tbody').addEventListener('change', e => {
+  const inp = e.target; const f = inp.dataset.f; if (!f) return;
+  const id = inp.closest('tr').dataset.id;
+  const d = S.load(); const p = d.prizes.find(x=>x.id===id); if (!p) return;
+  if (f==='name'){ const v=inp.value.trim(); if (v) p.name=v; }
+  else {
+    let v = Math.max(0, parseInt(inp.value,10)||0);
+    if (f==='qty'){ const drawn = p.qty - p.remaining; p.qty = v; p.remaining = Math.max(0, v - drawn); }
+    else { p.remaining = Math.min(v, p.qty); }
+  }
+  S.save(d); render();
+});
+$('tbody').addEventListener('click', e => {
+  const id = e.target.dataset.del; if (!id) return;
+  const d = S.load(); const p = d.prizes.find(x=>x.id===id);
+  if (!confirm(`刪除「${p.name}」？`)) return;
+  d.prizes = d.prizes.filter(x=>x.id!==id); S.save(d); render();
+});
+$('addRow').onclick = () => {
+  const d = S.load(); d.prizes.push({ id:S.uid(), name:'新獎項', qty:1, remaining:1 }); S.save(d); render();
+  const inputs = $('tbody').querySelectorAll('input[data-f=name]'); const last = inputs[inputs.length-1]; last.focus(); last.select();
+};
+
+/* ---------- 紀錄 ---------- */
+$('undo').onclick = () => {
+  const d = S.load(); const last = d.log[d.log.length-1];
+  if (!last){ toast('沒有紀錄可以撤銷'); return; }
+  if (!confirm(`撤銷第 ${last.no} 抽「${last.name}」？數量會加回去。`)) return;
+  S.undoLast(); render(); toast('已撤銷');
+};
+$('export').onclick = () => {
+  const d = S.load();
+  if (!d.log.length){ toast('還沒有紀錄'); return; }
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.aoa_to_sheet([['抽次','獎項','時間'], ...d.log.map(l=>[l.no, l.name, new Date(l.time).toLocaleString('zh-TW')])]);
+  ws1['!cols']=[{wch:8},{wch:28},{wch:22}];
+  const ws2 = XLSX.utils.aoa_to_sheet([['獎項名稱','總數量','已抽','剩餘'], ...d.prizes.map(p=>[p.name,p.qty,p.qty-p.remaining,p.remaining])]);
+  ws2['!cols']=[{wch:28},{wch:10},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws1, '抽獎紀錄');
+  XLSX.utils.book_append_sheet(wb, ws2, '獎項統計');
+  const t = new Date(); const p=n=>String(n).padStart(2,'0');
+  XLSX.writeFile(wb, `扭蛋抽獎紀錄_${t.getFullYear()}${p(t.getMonth()+1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}.xlsx`);
+};
+$('resetDraw').onclick = () => {
+  if (!confirm('所有獎項數量恢復成總數量，並清空抽獎紀錄。確定嗎？')) return;
+  const d = S.load(); d.prizes.forEach(p=>p.remaining=p.qty); d.log=[]; S.save(d); render(); toast('已重置');
+};
+$('wipe').onclick = () => {
+  if (!confirm('清空全部獎項與紀錄？這個動作無法復原。')) return;
+  const d = S.load(); d.prizes=[]; d.log=[]; S.save(d); render(); toast('已清空');
+};
+
+/* ---------- 設定 ---------- */
+$('saveTitle').onclick = () => {
+  const d = S.load(); d.settings = d.settings || {}; d.settings.title = $('title').value.trim(); S.save(d); toast('標題已更新');
+};
+
+/* 執行頁抽獎時即時同步 */
+window.addEventListener('storage', e => { if (e.key === S.KEY) render(); });
+render();
+</script>
+</body>
+</html>
