@@ -2,25 +2,33 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#070304">
 <title>扭蛋抽獎</title>
 <style>
   :root{ --gold1:#fff1b8; --gold2:#f2c14e; --gold3:#b87a14; --red:#d8141f; }
   *{box-sizing:border-box;margin:0;padding:0}
-  html,body{width:100%;height:100%;overflow:hidden;background:#070304;cursor:default;user-select:none}
+  html,body{width:100%;height:100%;overflow:hidden;background:#070304;cursor:default;user-select:none;-webkit-user-select:none;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
   body{font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+  img{-webkit-user-drag:none;-webkit-touch-callout:none}
   #stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;overflow:hidden;
-    background:
-      radial-gradient(ellipse 900px 700px at 50% 52%, #6b0d15 0%, #3a070b 38%, #160405 70%, #0b0304 100%);}
-  /* 地板 */
+    background:radial-gradient(ellipse 900px 700px at 50% 52%, #6b0d15 0%, #3a070b 38%, #160405 70%, #0b0304 100%);}
+  #stage.portrait{width:1080px;height:1920px;
+    background:radial-gradient(ellipse 800px 1000px at 50% 42%, #6b0d15 0%, #3a070b 40%, #160405 72%, #0b0304 100%);}
+
+  #content{position:absolute;left:0;top:0;width:1920px;height:1080px}
+  .portrait #content{width:1080px;height:1920px}
   #floor{position:absolute;left:0;right:0;bottom:0;height:260px;
     background:radial-gradient(ellipse 760px 120px at 50% 85%, rgba(255,90,90,.18), transparent 70%),
                linear-gradient(to bottom, transparent, rgba(0,0,0,.55));}
-  /* 背景慢轉光芒 */
   #bgRays{position:absolute;left:50%;top:52%;width:2400px;height:2400px;margin:-1200px 0 0 -1200px;opacity:.16;
     background:repeating-conic-gradient(from 0deg, rgba(255,210,120,.55) 0 6deg, transparent 6deg 18deg);
     -webkit-mask:radial-gradient(circle, #000 0, transparent 60%); mask:radial-gradient(circle, #000 0, transparent 60%);
     animation:spin 90s linear infinite}
+  .portrait #bgRays{top:42%}
   @keyframes spin{to{transform:rotate(360deg)}}
   .spark{position:absolute;width:6px;height:6px;border-radius:50%;background:#ffe7a0;box-shadow:0 0 10px 3px rgba(255,210,120,.7);opacity:0;animation:tw 3s ease-in-out infinite}
   @keyframes tw{0%,100%{opacity:0;transform:scale(.4)}50%{opacity:.9;transform:scale(1)}}
@@ -28,14 +36,16 @@
   #title{position:absolute;top:24px;left:0;right:0;text-align:center;font-size:78px;font-weight:900;letter-spacing:.08em;
     background:linear-gradient(180deg,var(--gold1) 10%,var(--gold2) 55%,var(--gold3) 95%);-webkit-background-clip:text;background-clip:text;color:transparent;
     filter:drop-shadow(0 6px 0 #5a0a0e) drop-shadow(0 0 30px rgba(255,180,80,.35))}
+  .portrait #title{top:80px;font-size:92px;padding:0 30px;line-height:1.15}
   #hint{position:absolute;top:124px;left:0;right:0;text-align:center;color:#ffe3b0;font-size:28px;font-weight:700;letter-spacing:.12em;transition:opacity .3s}
+  .portrait #hint{top:208px;font-size:36px}
   #hint span{display:inline-block;animation:pulse 1.6s ease-in-out infinite}
-  #hint kbd{display:inline-block;font:inherit;font-size:24px;padding:2px 16px;margin:0 8px;border:2px solid #ffe3b0;border-radius:10px}
+  #hint kbd{display:inline-block;font:inherit;font-size:.86em;padding:2px 16px;margin:0 8px;border:2px solid #ffe3b0;border-radius:10px}
   @keyframes pulse{50%{opacity:.45}}
 
   #machine{position:absolute;left:660px;top:180px;width:600px;height:900px;overflow:visible}
-  #machine .handle{transform-box:fill-box;transform-origin:center}
-  #machine .jig{transform-box:fill-box;transform-origin:center}
+  .portrait #machine{left:180px;top:300px;width:720px;height:1080px}
+  #machine .handle,#machine .jig{transform-box:fill-box;transform-origin:center}
 
   .dragon{position:absolute;bottom:30px;filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));transform-origin:50% 100%}
   .bob{animation:bob 2.4s ease-in-out infinite}
@@ -43,16 +53,17 @@
   @keyframes bob{50%{translate:0 -14px}}
   #dL{left:120px;height:520px}
   #dR{right:90px;height:620px}
+  .portrait #dL{left:10px;bottom:50px;height:470px}
+  .portrait #dR{right:0;bottom:50px;height:530px}
 
-  #veil{position:absolute;inset:0;background:radial-gradient(circle at 50% 48%, rgba(40,4,6,.55), rgba(0,0,0,.88));opacity:0;pointer-events:none}
-  #burst{position:absolute;left:960px;top:500px;width:1900px;height:1900px;margin:-950px 0 0 -950px;opacity:0;pointer-events:none;
+  #veil{position:absolute;inset:-1200px;background:radial-gradient(circle at 50% 46%, rgba(40,4,6,.55), rgba(0,0,0,.88));opacity:0;pointer-events:none}
+  #burst{position:absolute;width:1900px;height:1900px;margin:-950px 0 0 -950px;opacity:0;pointer-events:none;
     background:repeating-conic-gradient(from 0deg, rgba(255,214,110,.9) 0 5deg, transparent 5deg 15deg);
     -webkit-mask:radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 52%); mask:radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 52%)}
   #burst.on{animation:spin 18s linear infinite}
-  #glow{position:absolute;left:960px;top:500px;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;opacity:0;pointer-events:none;
+  #glow{position:absolute;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;opacity:0;pointer-events:none;
     background:radial-gradient(circle, rgba(255,236,170,.95) 0, rgba(255,190,80,.45) 25%, transparent 62%)}
 
-  /* 大扭蛋 */
   #cap{position:absolute;left:0;top:0;width:140px;height:140px;opacity:0;pointer-events:none;will-change:transform}
   #cap .half{position:absolute;left:0;width:140px;height:70px;overflow:hidden}
   #cap .top{top:0;border-radius:70px 70px 0 0;background:radial-gradient(circle at 34% 40%, var(--c1) 0, var(--c2) 45%, var(--c3) 100%);
@@ -62,25 +73,35 @@
   #cap .bot::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;background:rgba(0,0,0,.18)}
   #cap .shadow{position:absolute;left:10px;top:150px;width:120px;height:18px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(6px)}
 
-  #flash{position:absolute;inset:0;background:#fff8e2;opacity:0;pointer-events:none}
+  #flash{position:absolute;inset:-1200px;background:#fff8e2;opacity:0;pointer-events:none}
 
-  /* 開獎卡 */
-  #card{position:absolute;left:960px;top:520px;width:1040px;margin-left:-520px;transform:translateY(-50%) scale(.2);opacity:0;pointer-events:none;
+  #card{position:absolute;left:50%;top:520px;width:1040px;margin-left:-520px;transform:translateY(-50%) scale(.2);opacity:0;pointer-events:none;
     padding:48px 60px 54px;border-radius:40px;text-align:center;
     background:radial-gradient(ellipse at 50% 0%, #a3121b 0%, #6a0910 55%, #3d0408 100%);
     box-shadow:0 0 0 6px #f2c14e, 0 0 0 12px #6a0910, 0 0 0 16px #b87a14, 0 30px 80px rgba(0,0,0,.6), 0 0 120px rgba(255,190,80,.45)}
+  .portrait #card{top:860px;width:940px;margin-left:-470px;padding:54px 46px 60px}
   #card .lead{font-size:52px;font-weight:900;letter-spacing:.3em;color:#ffd977;margin-bottom:16px;text-indent:.3em}
   #card .name{font-size:150px;line-height:1.18;font-weight:900;color:#fff;word-break:break-word;
     text-shadow:0 6px 0 rgba(0,0,0,.35), 0 0 40px rgba(255,210,120,.5)}
   #card .no{margin-top:22px;font-size:26px;color:rgba(255,230,190,.7);letter-spacing:.2em}
   .rd{position:absolute;bottom:-30px;height:660px;opacity:0;filter:drop-shadow(0 18px 30px rgba(0,0,0,.6));pointer-events:none}
   #rL{left:-10px} #rR{right:-10px}
+  .portrait .rd{height:640px;bottom:-20px}
+  .portrait #rL{left:-40px} .portrait #rR{right:-30px}
+  #next{position:absolute;left:0;right:0;bottom:46px;text-align:center;color:rgba(255,230,190,.75);font-size:28px;letter-spacing:.15em;opacity:0;pointer-events:none}
+  .portrait #next{bottom:auto;top:1240px;font-size:34px}
 
-  #msg{position:absolute;left:960px;top:560px;transform:translate(-50%,-50%);padding:26px 54px;border-radius:24px;
-    background:rgba(20,4,6,.85);border:3px solid #f2c14e;color:#ffe9b8;font-size:54px;font-weight:900;letter-spacing:.1em;white-space:nowrap;
+  #msg{position:absolute;left:50%;top:560px;transform:translate(-50%,-50%);padding:26px 54px;border-radius:24px;max-width:92%;text-align:center;
+    background:rgba(20,4,6,.88);border:3px solid #f2c14e;color:#ffe9b8;font-size:54px;font-weight:900;letter-spacing:.08em;
     opacity:0;transition:opacity .4s;pointer-events:none}
+  .portrait #msg{top:740px;font-size:56px}
   #msg.show{opacity:1}
-  #fx{position:absolute;inset:0;pointer-events:none}
+  #fx{position:absolute;left:0;top:0;pointer-events:none}
+
+  #net{position:fixed;right:10px;top:10px;font:600 12px system-ui,sans-serif;color:#fff;background:rgba(0,0,0,.45);padding:4px 10px 4px 8px;border-radius:99px;
+    display:flex;align-items:center;gap:6px;opacity:.55;z-index:5;pointer-events:none}
+  #net i{width:8px;height:8px;border-radius:50%;background:#888}
+  #net.on i{background:#3ad07a} #net.off{opacity:1;background:#b3121c} #net.off i{background:#fff}
   #fsHint{position:fixed;right:14px;bottom:10px;color:rgba(255,255,255,.25);font-size:13px;font-family:system-ui;transition:opacity 1s}
 </style>
 </head>
@@ -90,8 +111,9 @@
   <div id="floor"></div>
   <div id="sparks"></div>
 
+  <div id="content">
   <div id="title">LUCKY 扭蛋機</div>
-  <div id="hint"><span>按 <kbd>空白鍵</kbd> 轉動扭蛋</span></div>
+  <div id="hint"><span id="hintTxt">按 <kbd>空白鍵</kbd> 轉動扭蛋</span></div>
 
   <img id="dL" class="dragon bob2" src="assets/dragon_stand.webp" alt="">
   <img id="dR" class="dragon bob" src="assets/dragon_wave.webp" alt="">
@@ -121,29 +143,24 @@
       <clipPath id="clipGlobe"><circle cx="300" cy="290" r="226"/></clipPath>
     </defs>
 
-    <!-- 頂蓋 -->
     <ellipse cx="300" cy="78" rx="86" ry="22" fill="url(#gGold)"/>
     <path d="M222 78 Q300 2 378 78 Z" fill="url(#gBody)"/>
     <circle cx="300" cy="22" r="16" fill="url(#gGold)"/>
 
-    <!-- 玻璃球 -->
     <circle cx="300" cy="290" r="232" fill="rgba(255,255,255,.05)"/>
     <g id="pile" clip-path="url(#clipGlobe)"></g>
     <circle cx="300" cy="290" r="232" fill="url(#gGlass)" stroke="url(#gMetal)" stroke-width="10"/>
     <path d="M128 230 A182 182 0 0 1 250 112" stroke="#fff" stroke-opacity=".55" stroke-width="16" fill="none" stroke-linecap="round"/>
     <path d="M118 290 A182 182 0 0 1 121 262" stroke="#fff" stroke-opacity=".45" stroke-width="12" fill="none" stroke-linecap="round"/>
 
-    <!-- 頸部 -->
     <rect x="160" y="500" width="280" height="40" rx="10" fill="url(#gMetal)"/>
     <rect x="128" y="532" width="344" height="24" rx="12" fill="url(#gGold)"/>
 
-    <!-- 機身 -->
     <rect x="106" y="550" width="388" height="300" rx="36" fill="url(#gBody)"/>
     <rect x="106" y="550" width="388" height="300" rx="36" fill="none" stroke="#5a0509" stroke-width="3" opacity=".6"/>
     <text x="300" y="598" text-anchor="middle" font-size="28" font-weight="900" letter-spacing="8" fill="#ffe08a"
           font-family="Arial Black, Noto Sans TC, sans-serif">LUCKY</text>
 
-    <!-- 轉把 -->
     <g class="handle" id="handle">
       <circle cx="300" cy="680" r="66" fill="#5a0509" opacity=".5"/>
       <circle cx="300" cy="676" r="62" fill="url(#gKnob)" stroke="#6b6b75" stroke-width="3"/>
@@ -151,12 +168,10 @@
       <circle cx="300" cy="676" r="15" fill="#d8141f" stroke="#7a070d" stroke-width="3"/>
     </g>
 
-    <!-- 出口 -->
     <rect x="232" y="768" width="136" height="64" rx="20" fill="url(#gMetal)"/>
     <rect x="242" y="776" width="116" height="48" rx="14" fill="#1a0204"/>
     <path d="M246 790 Q300 772 354 790 L354 782 Q300 768 246 782 Z" fill="rgba(255,255,255,.18)"/>
 
-    <!-- 底座 -->
     <rect x="92" y="846" width="416" height="34" rx="14" fill="#3a0609"/>
     <rect x="92" y="846" width="416" height="10" rx="5" fill="url(#gGold)" opacity=".85"/>
   </svg>
@@ -169,13 +184,16 @@
   <img id="rR" class="rd" src="assets/lucky_thumbs.webp" alt="">
 
   <div id="card"><div class="lead">恭喜獲得</div><div class="name" id="prizeName"></div><div class="no" id="drawNo"></div></div>
+  <div id="next">點一下繼續</div>
 
   <div id="cap"><div class="shadow"></div><div class="half bot"></div><div class="half top"></div></div>
 
   <div id="msg"></div>
   <canvas id="fx" width="1920" height="1080"></canvas>
   <div id="flash"></div>
+  </div>
 </div>
+<div id="net"><i></i><span>連線中…</span></div>
 <div id="fsHint">F：全螢幕</div>
 
 <script src="store.js"></script>
@@ -186,20 +204,42 @@ const stage = $('stage');
 const A = n => `assets/${n}.webp`;
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const rand = (a,b) => a + Math.random()*(b-a);
+const TOUCH = matchMedia('(pointer:coarse)').matches;
 
-/* ---------- 畫面縮放 16:9 ---------- */
-function fit(){ const s = Math.min(innerWidth/1920, innerHeight/1080); stage.style.transform = `translate(-50%,-50%) scale(${s})`; }
-addEventListener('resize', fit); fit();
+/* ---------- 版面：橫式 16:9（電腦／投影）、直式 9:16（手機） ---------- */
+const LAYOUTS = {
+  land: { W:1920, H:1080, ms:1,   chute:{x:960, y:978},  c:{x:960, y:500}, capS:2.6, nameFs:150 },
+  port: { W:1080, H:1920, ms:1.2, chute:{x:540, y:1260}, c:{x:540, y:800}, capS:2.9, nameFs:132 }
+};
+let L = LAYOUTS.land, busy = false, state = 'idle';
+function fit(){
+  const port = innerHeight > innerWidth * 1.05;
+  if (!busy && state === 'idle'){
+    L = port ? LAYOUTS.port : LAYOUTS.land;
+    stage.classList.toggle('portrait', port);
+    const fx = $('fx'); fx.width = L.W; fx.height = L.H; fx.style.width = L.W+'px'; fx.style.height = L.H+'px';
+    for (const id of ['burst','glow']){ $(id).style.left = L.c.x+'px'; $(id).style.top = L.c.y+'px'; }
+    $('hintTxt').innerHTML = TOUCH ? '點一下畫面　轉動扭蛋' : '按 <kbd>空白鍵</kbd> 轉動扭蛋';
+    $('next').textContent = TOUCH ? '點一下繼續' : '按空白鍵繼續';
+  }
+  /* 舞台延伸到填滿整個螢幕，內容維持置中，不留黑邊 */
+  const iw = innerWidth, ih = innerHeight;
+  const SW = Math.max(L.W, Math.round(L.H * iw / ih)), SH = Math.max(L.H, Math.round(L.W * ih / iw));
+  stage.style.width = SW + 'px'; stage.style.height = SH + 'px';
+  const ct = $('content'); ct.style.left = ((SW - L.W) / 2) + 'px'; ct.style.top = ((SH - L.H) / 2) + 'px';
+  const s = Math.min(iw / SW, ih / SH);
+  stage.style.transform = `translate(-50%,-50%) scale(${s})`;
+}
+addEventListener('resize', fit);
+fit();
 
-/* ---------- 預載圖片 ---------- */
+/* ---------- 預載 ---------- */
 ['lucky_open','lucky_point','lucky_thumbs','lucky_fly','dragon_stand','dragon_talk','dragon_wave','dragon_tumble'].forEach(n => { const i = new Image(); i.src = A(n); });
 
-/* ---------- 背景星光 ---------- */
 (function(){ const box = $('sparks'); let h='';
-  for (let i=0;i<46;i++){ h += `<i class="spark" style="left:${rand(20,1900)}px;top:${rand(20,1000)}px;animation-delay:${rand(0,3).toFixed(2)}s;animation-duration:${rand(2.2,4.2).toFixed(2)}s"></i>`; }
+  for (let i=0;i<46;i++){ h += `<i class="spark" style="left:${rand(1,99).toFixed(1)}%;top:${rand(1,97).toFixed(1)}%;animation-delay:${rand(0,3).toFixed(2)}s;animation-duration:${rand(2.2,4.2).toFixed(2)}s"></i>`; }
   box.innerHTML = h; })();
 
-/* ---------- 扭蛋配色 ---------- */
 const COLORS = [
   ['#ff9aa0','#e8222d','#8f0a12'], ['#ffe9a3','#f2b631','#9a6510'], ['#a9d8ff','#2f86e0','#123f82'],
   ['#b9f5c4','#2fb85a','#11602b'], ['#e2c2ff','#9447e0','#4b1a85'], ['#ffc2e6','#ec4fa6','#8a1d5c'],
@@ -235,20 +275,20 @@ function confetti(n=220){
   const cols = ['#ffd24a','#ff4a55','#ffffff','#4ab3ff','#6be08a','#ff8ad0','#ffb13b'];
   for (let i=0;i<n;i++){
     const a = rand(0, Math.PI*2), sp = rand(8, 26);
-    parts.push({ x:960, y:500, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - rand(4,10), w:rand(10,20), h:rand(6,12),
-      r:rand(0,6.28), vr:rand(-.3,.3), c:cols[i%cols.length], life:rand(140,220) });
+    parts.push({ x:L.c.x, y:L.c.y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp - rand(4,10), w:rand(10,20), h:rand(6,12),
+      r:rand(0,6.28), vr:rand(-.3,.3), c:cols[i%cols.length], life:rand(150,240) });
   }
   if (!fxRun){ fxRun = true; requestAnimationFrame(tick); }
 }
 function tick(){
-  ctx.clearRect(0,0,1920,1080);
-  parts = parts.filter(p => p.life > 0 && p.y < 1150);
+  ctx.clearRect(0,0,fx.width,fx.height);
+  parts = parts.filter(p => p.life > 0 && p.y < fx.height + 60);
   for (const p of parts){
     p.vx *= .985; p.vy = p.vy*.985 + .38; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life--;
     ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.globalAlpha = Math.min(1, p.life/40);
     ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h*Math.abs(Math.cos(p.r*1.7))+2); ctx.restore();
   }
-  if (parts.length) requestAnimationFrame(tick); else { fxRun = false; ctx.clearRect(0,0,1920,1080); }
+  if (parts.length) requestAnimationFrame(tick); else { fxRun = false; ctx.clearRect(0,0,fx.width,fx.height); }
 }
 
 /* ---------- 小工具 ---------- */
@@ -260,30 +300,36 @@ function swap(img, name){
 }
 function fade(el, to, ms=400){ return el.animate([{opacity:getComputedStyle(el).opacity},{opacity:to}],{duration:ms,fill:'forwards',easing:'ease'}).finished; }
 function fitName(el){
-  let fs = 150; el.style.fontSize = fs+'px';
-  while (fs > 52 && el.scrollHeight > fs*1.18*2 + 6){ fs -= 6; el.style.fontSize = fs+'px'; }
+  let fs = L.nameFs; el.style.fontSize = fs+'px';
+  while (fs > 48 && el.scrollHeight > fs*1.18*2 + 6){ fs -= 6; el.style.fontSize = fs+'px'; }
 }
+let msgT;
+function flashMsg(t, ms=2600){ const m=$('msg'); m.textContent=t; m.classList.add('show'); clearTimeout(msgT); msgT=setTimeout(()=>{ refreshIdle(); }, ms); }
+function timeout(p, ms){ return Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')), ms))]); }
 
-/* ---------- 狀態 ---------- */
-let state = 'idle', busy = false;
+/* ---------- 待機畫面狀態 ---------- */
 const cap = $('cap'), card = $('card');
-
 function refreshIdle(){
-  const d = S.load();
-  $('title').textContent = (d.settings && d.settings.title) || 'LUCKY 扭蛋機';
+  const v = S.view();
+  $('title').textContent = v.settings.title || 'LUCKY 扭蛋機';
   if (state !== 'idle') return;
   const msg = $('msg');
-  if (!d.prizes.length){ msg.textContent = '尚未匯入獎項，請先到後台匯入'; msg.classList.add('show'); $('hint').style.opacity = 0; swap($('dR'),'dragon_stand'); }
-  else if (!d.prizes.some(p => p.remaining > 0)){ msg.textContent = '🎉 獎品已全部抽完'; msg.classList.add('show'); $('hint').style.opacity = 0; swap($('dR'),'dragon_tumble'); }
+  if (!v.ready){ msg.textContent = '連線中…'; msg.classList.add('show'); $('hint').style.opacity = 0; }
+  else if (!v.prizes.length){ msg.textContent = '尚未匯入獎項'; msg.classList.add('show'); $('hint').style.opacity = 0; swap($('dR'),'dragon_stand'); }
+  else if (!v.prizes.some(p => p.remaining > 0)){ msg.textContent = '🎉 獎品已全部抽完'; msg.classList.add('show'); $('hint').style.opacity = 0; swap($('dR'),'dragon_tumble'); }
   else { msg.classList.remove('show'); $('hint').style.opacity = 1; swap($('dR'),'dragon_wave'); }
 }
 
 async function play(){
-  const res = S.draw();                       // 先寫入結果，動畫中途重新整理也不會漏記
-  if (!res){ refreshIdle(); return; }
+  const v = S.view();
+  if (!v.ready || !v.prizes.some(p => p.remaining > 0)){ refreshIdle(); return; }
+  if (!S.isConnected()){ flashMsg('網路未連線，請檢查網路後再試'); return; }
   busy = true; state = 'anim';
+  const drawP = S.draw();                     // 先送出抽獎，動畫同時進行
+  drawP.catch(()=>{});
   $('hint').style.opacity = 0; $('msg').classList.remove('show');
   const dL = $('dL'), dR = $('dR');
+  const ms = L.ms, C = L.c, H = L.chute;
 
   /* 1. 轉把手 + 機器搖晃 */
   swap(dL,'dragon_talk'); swap(dR,'lucky_point');
@@ -300,15 +346,29 @@ async function play(){
   });
   await wait(SPIN);
 
+  /* 等抽獎結果（正常早就回來了） */
+  let res = null;
+  try { res = await timeout(drawP, 7000); } catch(e){ res = null; }
+  if (!res || !res.committed){
+    busy = false; state = 'idle';
+    swap(dL,'dragon_stand');
+    flashMsg(res ? '獎品已全部抽完' : '網路不穩，這次沒有抽出，請再試一次', 3200);
+    return;
+  }
+  const prize = res.result.prize, entry = res.result.entry;
+
   /* 2. 扭蛋掉出來 */
   const c = COLORS[Math.floor(Math.random()*COLORS.length)];
   cap.style.setProperty('--c1',c[0]); cap.style.setProperty('--c2',c[1]); cap.style.setProperty('--c3',c[2]);
-  cap.querySelector('.top').style.cssText = ''; cap.querySelector('.bot').style.cssText = ''; cap.querySelector('.shadow').style.opacity = 1;
+  cap.querySelector('.top').getAnimations().forEach(a=>a.cancel());
+  cap.querySelector('.bot').getAnimations().forEach(a=>a.cancel());
+  cap.querySelector('.shadow').style.opacity = 1;
+  const end = T(H.x, H.y+30, .6*ms, 70);
   const drop = cap.animate([
-    {opacity:0, transform:T(960,978,.42,0)},
-    {opacity:1, transform:T(960,1004,.55,30), offset:.45},
-    {opacity:1, transform:T(960,984,.58,50), offset:.7},
-    {opacity:1, transform:T(960,1008,.6,70)}],
+    {opacity:0, transform:T(H.x, H.y, .42*ms, 0)},
+    {opacity:1, transform:T(H.x, H.y+26, .55*ms, 30), offset:.45},
+    {opacity:1, transform:T(H.x, H.y+6, .58*ms, 50), offset:.7},
+    {opacity:1, transform:end}],
     {duration:650, easing:'ease-in', fill:'forwards'});
   swap(dL,'dragon_wave');
   await drop.finished;
@@ -316,18 +376,19 @@ async function play(){
 
   /* 3. 龍飛撲、扭蛋飛到畫面中央 */
   swap(dR,'lucky_fly');
-  dR.animate([{transform:'translate(0,0)'},{transform:'translate(-260px,-160px) rotate(-8deg)'},{transform:'translate(0,0)'}],{duration:1000,easing:'ease-in-out'});
+  dR.animate([{transform:'translate(0,0)'},{transform:`translate(${-260*ms}px,${-160*ms}px) rotate(-8deg)`},{transform:'translate(0,0)'}],{duration:1000,easing:'ease-in-out'});
   fade($('veil'), 1, 900);
   cap.querySelector('.shadow').style.opacity = 0;
-  await cap.animate([{transform:T(960,1008,.6,70)},{transform:T(960,500,2.6,720)}],
+  const S0 = L.capS;
+  await cap.animate([{transform:end},{transform:T(C.x,C.y,S0,720)}],
     {duration:1000, easing:'cubic-bezier(.3,.1,.2,1)', fill:'forwards'}).finished;
 
   /* 4. 醞釀：搖晃 + 光暈 */
   fade($('glow'), .55, 1300);
+  const w = (s,r) => ({transform:T(C.x,C.y,S0*s,r)});
   await cap.animate([
-    {transform:T(960,500,2.6,720)},{transform:T(960,500,2.6,712)},{transform:T(960,500,2.6,728)},{transform:T(960,500,2.6,720)},
-    {transform:T(960,500,2.7,708)},{transform:T(960,500,2.7,732)},{transform:T(960,500,2.7,720)},
-    {transform:T(960,500,2.85,704)},{transform:T(960,500,2.85,736)},{transform:T(960,500,2.9,700)},{transform:T(960,500,2.9,740)},{transform:T(960,500,2.95,720)}],
+    w(1,720),w(1,712),w(1,728),w(1,720),w(1.04,708),w(1.04,732),w(1.04,720),
+    w(1.1,704),w(1.1,736),w(1.12,700),w(1.12,740),w(1.14,720)],
     {duration:1500, easing:'ease-in', fill:'forwards'}).finished;
 
   /* 5. 開蛋！ */
@@ -335,8 +396,8 @@ async function play(){
   cap.querySelector('.top').animate([{transform:'none',opacity:1},{transform:'translate(-60px,-230px) rotate(-55deg)',opacity:0}],{duration:650,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
   cap.querySelector('.bot').animate([{transform:'none',opacity:1},{transform:'translate(40px,200px) rotate(35deg)',opacity:0}],{duration:650,easing:'cubic-bezier(.4,0,.7,.4)',fill:'forwards'});
   $('burst').classList.add('on'); fade($('burst'), 1, 500); fade($('glow'), .9, 300);
-  $('prizeName').textContent = res.prize.name;
-  $('drawNo').textContent = `第 ${res.entry.no} 抽`;
+  $('prizeName').textContent = prize.name;
+  $('drawNo').textContent = `第 ${entry.no} 抽`;
   card.animate([{opacity:0, transform:'translateY(-50%) scale(.2)'},{opacity:1, transform:'translateY(-50%) scale(1.08)', offset:.7},{opacity:1, transform:'translateY(-50%) scale(1)'}],
     {duration:620, easing:'cubic-bezier(.2,.8,.3,1.2)', fill:'forwards'});
   fitName($('prizeName'));
@@ -344,6 +405,7 @@ async function play(){
   $('rL').animate([{opacity:0, transform:'translate(-200px,160px) rotate(-12deg)'},{opacity:1, transform:'none'}],{duration:600,delay:180,easing:'cubic-bezier(.2,.8,.3,1.3)',fill:'forwards'});
   $('rR').animate([{opacity:0, transform:'translate(200px,160px) rotate(12deg)'},{opacity:1, transform:'none'}],{duration:600,delay:260,easing:'cubic-bezier(.2,.8,.3,1.3)',fill:'forwards'});
   await wait(900);
+  fade($('next'), 1, 600);
   state = 'result'; busy = false;
 }
 
@@ -351,20 +413,29 @@ async function reset(){
   busy = true;
   const ms = 450;
   card.animate([{opacity:1, transform:'translateY(-50%) scale(1)'},{opacity:0, transform:'translateY(-50%) scale(.85)'}],{duration:ms,fill:'forwards'});
-  fade($('rL'),0,ms); fade($('rR'),0,ms); fade($('burst'),0,ms); fade($('glow'),0,ms); fade($('veil'),0,ms);
+  for (const id of ['rL','rR','burst','glow','veil','next']) fade($(id),0,ms);
   cap.animate([{opacity:0},{opacity:0}],{duration:1,fill:'forwards'});
   await wait(ms);
   $('burst').classList.remove('on');
   swap($('dL'),'dragon_stand');
   state = 'idle'; busy = false;
+  fit();
   refreshIdle();
 }
 
 function advance(){
   if (busy) return;
+  keepAwake();
   if (state === 'idle') play();
   else if (state === 'result') reset();
 }
+
+/* ---------- 手機螢幕常亮 ---------- */
+let lock = null;
+async function keepAwake(){
+  try { if ('wakeLock' in navigator && !lock){ lock = await navigator.wakeLock.request('screen'); lock.addEventListener('release', ()=>{ lock = null; }); } } catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
 
 addEventListener('keydown', e => {
   if ([' ','Enter','PageDown','ArrowRight','ArrowDown'].includes(e.key)){ e.preventDefault(); if (!e.repeat) advance(); }
@@ -373,9 +444,17 @@ addEventListener('keydown', e => {
   }
 });
 addEventListener('pointerdown', e => { if (e.button === 0) advance(); });
-addEventListener('storage', e => { if (e.key === S.KEY) refreshIdle(); });
+addEventListener('contextmenu', e => e.preventDefault());
+if (TOUCH) $('fsHint').style.display = 'none';
 setTimeout(()=>{ $('fsHint').style.opacity = 0; }, 6000);
+
+S.onConnection(on => {
+  const n = $('net'); n.className = on ? 'on' : 'off';
+  n.querySelector('span').textContent = S.LOCAL ? '本機模式' : (on ? '已連線' : '網路未連線');
+});
+S.subscribe(() => refreshIdle());
 refreshIdle();
+S.init().catch(e => { $('msg').textContent = '資料庫連線失敗'; $('msg').classList.add('show'); console.error(e); });
 </script>
 </body>
 </html>

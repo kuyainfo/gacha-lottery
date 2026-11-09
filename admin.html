@@ -12,10 +12,16 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;font-size:15px}
-  header{background:#1a1213;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  header{background:#1a1213;color:#fff;padding:14px 24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
   header h1{margin:0;font-size:20px;letter-spacing:.05em}
   header h1 b{color:var(--gold)}
   header .sp{flex:1}
+  .ev{font-size:13px;color:#d9cfc8;background:#2c2122;border-radius:99px;padding:4px 12px}
+  .ev b{color:#fff}
+  .conn{font-size:13px;display:inline-flex;align-items:center;gap:6px;color:#d9cfc8}
+  .conn i{width:9px;height:9px;border-radius:50%;background:#888;display:inline-block}
+  .conn.on i{background:#3ad07a;box-shadow:0 0 8px #3ad07a}
+  .conn.off i{background:#ff4a4a}
   main{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:20px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
   .card h2{margin:0 0 4px;font-size:17px}
@@ -23,11 +29,11 @@
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   button,.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
   button:hover,.btn:hover{border-color:#bdb2ab}
+  button:disabled{opacity:.5;cursor:wait}
   .primary{background:var(--red);border-color:var(--red);color:#fff}
   .primary:hover{background:var(--red-d);border-color:var(--red-d)}
   .gold{background:var(--gold);border-color:var(--gold);color:#2a1d05;font-weight:700}
   .danger{color:var(--red);border-color:#f0c9cb}
-  .ghost-dark{background:transparent;color:#fff;border-color:#5a4a4b}
   input[type=text],input[type=number],textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;color:var(--ink);width:100%}
   textarea{min-height:110px;resize:vertical;font-family:ui-monospace,Consolas,monospace;font-size:13px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -49,19 +55,47 @@
   .log{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:10px}
   .log table th{position:sticky;top:0;background:#faf7f5}
   .empty{color:var(--muted);text-align:center;padding:24px}
-  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#1a1213;color:#fff;padding:10px 18px;border-radius:10px;transition:.25s;pointer-events:none;max-width:90vw}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;background:#1a1213;color:#fff;padding:10px 18px;border-radius:10px;transition:.25s;pointer-events:none;max-width:90vw;z-index:9}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .note{font-size:13px;color:var(--muted);margin-top:8px}
+  .qrwrap{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  #qr{width:180px;height:180px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px}
+  #qr img,#qr svg{width:100%;height:100%;display:block}
+  .url{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:#faf7f5;border:1px solid var(--line);border-radius:8px;padding:8px 10px;word-break:break-all}
+  #loading{position:fixed;inset:0;background:rgba(244,241,238,.85);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted);z-index:8}
 </style>
 </head>
 <body>
 <header>
   <h1>扭蛋抽獎 <b>後台</b></h1>
+  <span class="ev">活動代碼：<b id="evCode"></b></span>
+  <span class="conn" id="conn"><i></i><span>連線中…</span></span>
   <div class="sp"></div>
-  <a class="btn gold" href="draw.html" target="_blank">開啟執行頁 ↗</a>
+  <a class="btn gold" id="openDraw" href="draw.html" target="_blank">開啟執行頁 ↗</a>
 </header>
 
 <main>
+  <!-- 執行頁連結 -->
+  <section class="card">
+    <h2>📱 執行頁連結</h2>
+    <p class="sub">用手機掃 QR 就能打開執行頁；後台改的獎項會即時同步到所有打開的執行頁。</p>
+    <div class="qrwrap">
+      <div id="qr"></div>
+      <div style="flex:1;min-width:260px">
+        <div class="url" id="drawUrl"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="copyUrl">複製連結</button>
+        </div>
+        <div class="row" style="margin-top:16px">
+          <label style="min-width:70px">切換活動</label>
+          <input type="text" id="evInput" style="max-width:200px" placeholder="例如 msi">
+          <button id="evGo">切換</button>
+        </div>
+        <p class="note">每個活動代碼的獎項、紀錄各自獨立；只能用英文小寫、數字、- 和 _。</p>
+      </div>
+    </div>
+  </section>
+
   <!-- 匯入 -->
   <section class="card">
     <h2>① 匯入獎項</h2>
@@ -131,29 +165,66 @@
       <input type="text" id="title" style="max-width:420px" placeholder="LUCKY 扭蛋機">
       <button id="saveTitle">儲存</button>
     </div>
-    <p class="note">執行頁操作：空白鍵 / Enter / 簡報筆翻頁 / 滑鼠點擊 ＝ 開抽 &amp; 下一位；F ＝ 全螢幕。後台與執行頁請開在同一台電腦、同一個瀏覽器。</p>
+    <p class="note">執行頁操作：點畫面 / 空白鍵 / Enter / 簡報筆翻頁 ＝ 開抽 &amp; 下一位；電腦上按 F ＝ 全螢幕。</p>
   </section>
 </main>
 
+<div id="loading">連線資料庫中…</div>
 <div class="toast" id="toast"></div>
 
 <script src="lib/xlsx.full.min.js"></script>
+<script src="lib/qrcode.js"></script>
 <script src="store.js"></script>
 <script>
 const S = window.GachaStore;
 const $ = id => document.getElementById(id);
+let V = { prizes:[], log:[], settings:{} };
 let toastT;
-function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2800); }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function run(btn, fn){
+  if (btn) btn.disabled = true;
+  try { return await fn(); }
+  catch(e){ console.error(e); toast('寫入失敗：' + (e.message || e)); }
+  finally { if (btn) btn.disabled = false; }
+}
+
+/* ---------- 活動代碼 / 執行頁連結 ---------- */
+function pageUrl(file, ev){
+  const u = new URL(file, location.href);
+  if (ev && ev !== 'main') u.searchParams.set('e', ev);
+  if (S.LOCAL) u.searchParams.set('local','1');
+  return u.href;
+}
+(function setupLinks(){
+  $('evCode').textContent = S.EVENT + (S.LOCAL ? '（本機測試模式）' : '');
+  const url = pageUrl('draw.html', S.EVENT);
+  $('drawUrl').textContent = url;
+  $('openDraw').href = url;
+  try{
+    const q = qrcode(0, 'M'); q.addData(url); q.make();
+    $('qr').innerHTML = q.createSvgTag({ cellSize:4, margin:0, scalable:true });
+  }catch(e){ $('qr').textContent = 'QR 產生失敗'; }
+  $('copyUrl').onclick = () => navigator.clipboard.writeText(url).then(()=>toast('已複製執行頁連結'), ()=>toast('複製失敗，請手動選取'));
+  $('evInput').value = S.EVENT === 'main' ? '' : S.EVENT;
+  $('evGo').onclick = () => {
+    const v = $('evInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
+    location.href = pageUrl('admin.html', v || 'main');
+  };
+})();
 
 /* ---------- 渲染 ---------- */
-function render(){
-  const d = S.load();
+function render(v){
+  V = v;
+  $('loading').style.display = 'none';
+  renderStats(v);
   const tb = $('tbody');
-  if (!d.prizes.length){
+  const active = document.activeElement;
+  if (active && tb.contains(active)) return;          // 正在打字的時候不重畫，避免游標跳掉
+  if (!v.prizes.length){
     tb.innerHTML = '<tr><td colspan="6" class="empty">還沒有獎項，先從上方匯入</td></tr>';
   } else {
-    tb.innerHTML = d.prizes.map((p,i)=>`
+    tb.innerHTML = v.prizes.map((p,i)=>`
       <tr data-id="${p.id}" class="${p.remaining<=0?'out':''}">
         <td class="n">${i+1}</td>
         <td><input type="text" data-f="name" value="${esc(p.name)}"></td>
@@ -163,17 +234,17 @@ function render(){
         <td class="x"><button class="danger" data-del="${p.id}" title="刪除">✕</button></td>
       </tr>`).join('');
   }
-  const leftTypes = d.prizes.filter(p=>p.remaining>0).length;
-  $('sTypes').textContent = d.prizes.length;
+}
+function renderStats(v){
+  const leftTypes = v.prizes.filter(p=>p.remaining>0).length;
+  $('sTypes').textContent = v.prizes.length;
   $('sLeftTypes').textContent = leftTypes;
-  $('sLeft').textContent = d.prizes.reduce((a,p)=>a+Math.max(0,p.remaining),0);
+  $('sLeft').textContent = v.prizes.reduce((a,p)=>a+Math.max(0,p.remaining),0);
   $('sProb').textContent = leftTypes ? (100/leftTypes).toFixed(1)+'%' : '—';
-
   const lb = $('logBody');
-  if (!d.log.length) lb.innerHTML = '<tr><td colspan="3" class="empty">還沒有抽獎紀錄</td></tr>';
-  else lb.innerHTML = d.log.slice().reverse().map(l=>`<tr><td>${l.no}</td><td>${esc(l.name)}</td><td>${fmt(l.time)}</td></tr>`).join('');
-
-  if (document.activeElement !== $('title')) $('title').value = (d.settings && d.settings.title) || '';
+  if (!v.log.length) lb.innerHTML = '<tr><td colspan="3" class="empty">還沒有抽獎紀錄</td></tr>';
+  else lb.innerHTML = v.log.slice().reverse().map(l=>`<tr><td>${l.no}</td><td>${esc(l.name)}</td><td>${fmt(l.time)}</td></tr>`).join('');
+  if (document.activeElement !== $('title')) $('title').value = v.settings.title || '';
 }
 function fmt(t){ const d=new Date(t); const p=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; }
 
@@ -188,20 +259,18 @@ function rowsToPrizes(rows){
     const q = parseInt(qRaw,10);
     if (i===0 && isNaN(q)) return;              // 標題列
     if (!name || isNaN(q) || q<=0){ bad.push(i+1); return; }
-    if (map.has(name)){ map.get(name).qty += q; map.get(name).remaining += q; return; }
-    const p = { id:S.uid(), name, qty:q, remaining:q };
-    map.set(name,p); out.push(p);
+    if (map.has(name)){ map.get(name).qty += q; return; }
+    const p = { name, qty:q }; map.set(name,p); out.push(p);
   });
   return { prizes: out, bad };
 }
-function applyImport(rows){
+async function applyImport(rows){
   const { prizes, bad } = rowsToPrizes(rows);
-  if (!prizes.length){ toast('沒讀到有效資料：A 欄要是名稱、B 欄要是大於 0 的數字'); return; }
-  const d = S.load();
-  if ((d.prizes.length || d.log.length) && !confirm(`匯入會取代目前 ${d.prizes.length} 個品項，並清空 ${d.log.length} 筆抽獎紀錄。確定嗎？`)) return;
-  d.prizes = prizes; d.log = [];
-  S.save(d); render();
-  toast(`已匯入 ${prizes.length} 個品項` + (bad.length ? `（第 ${bad.join('、')} 列格式不對已略過）` : ''));
+  if (!prizes.length){ toast('沒讀到有效資料：A 欄要是名稱、B 欄要是大於 0 的數字'); return false; }
+  if ((V.prizes.length || V.log.length) && !confirm(`匯入會取代目前 ${V.prizes.length} 個品項，並清空 ${V.log.length} 筆抽獎紀錄。確定嗎？`)) return false;
+  const r = await run(null, () => S.importPrizes(prizes));
+  if (r && r.committed) { toast(`已匯入 ${prizes.length} 個品項` + (bad.length ? `（第 ${bad.join('、')} 列格式不對已略過）` : '')); return true; }
+  return false;
 }
 function readFile(f){
   const rd = new FileReader();
@@ -220,12 +289,13 @@ $('file').onchange = e => { if (e.target.files[0]) readFile(e.target.files[0]); 
 ['dragleave','drop'].forEach(ev=>$('drop').addEventListener(ev,e=>{e.preventDefault();$('drop').classList.remove('on');}));
 $('drop').addEventListener('drop', e => { const f=e.dataTransfer.files[0]; if (f) readFile(f); });
 
-$('pasteGo').onclick = () => {
+$('pasteGo').onclick = async () => {
   const txt = $('paste').value.trim();
   if (!txt){ toast('先貼上內容'); return; }
   const rows = txt.split(/\r?\n/).map(l => l.includes('\t') ? l.split('\t') : l.split(/,(?=[^,]*$)/));
-  applyImport(rows);
-  $('paste').value='';
+  $('pasteGo').disabled = true;
+  if (await applyImport(rows)) $('paste').value='';
+  $('pasteGo').disabled = false;
 };
 $('tpl').onclick = () => {
   const ws = XLSX.utils.aoa_to_sheet([['獎項名稱','數量'],['iPad Air',2],['AirPods',5],['禮券 500 元',20]]);
@@ -235,66 +305,70 @@ $('tpl').onclick = () => {
 };
 
 /* ---------- 編輯 ---------- */
-$('tbody').addEventListener('change', e => {
+$('tbody').addEventListener('change', async e => {
   const inp = e.target; const f = inp.dataset.f; if (!f) return;
   const id = inp.closest('tr').dataset.id;
-  const d = S.load(); const p = d.prizes.find(x=>x.id===id); if (!p) return;
-  if (f==='name'){ const v=inp.value.trim(); if (v) p.name=v; }
-  else {
-    let v = Math.max(0, parseInt(inp.value,10)||0);
-    if (f==='qty'){ const drawn = p.qty - p.remaining; p.qty = v; p.remaining = Math.max(0, v - drawn); }
-    else { p.remaining = Math.min(v, p.qty); }
-  }
-  S.save(d); render();
+  const val = inp.value;
+  inp.blur();
+  await run(null, () => S.updatePrize(id, p => {
+    if (f==='name'){ const v=val.trim(); if (v) p.name=v; }
+    else {
+      const v = Math.max(0, parseInt(val,10)||0);
+      if (f==='qty'){ const drawn = (+p.qty||0) - (+p.remaining||0); p.qty = v; p.remaining = Math.max(0, v - drawn); }
+      else { p.remaining = Math.min(v, +p.qty||0); }
+    }
+  }));
+  render(S.view());
 });
 $('tbody').addEventListener('click', e => {
   const id = e.target.dataset.del; if (!id) return;
-  const d = S.load(); const p = d.prizes.find(x=>x.id===id);
+  const p = V.prizes.find(x=>x.id===id); if (!p) return;
   if (!confirm(`刪除「${p.name}」？`)) return;
-  d.prizes = d.prizes.filter(x=>x.id!==id); S.save(d); render();
+  run(e.target, () => S.deletePrize(id));
 });
-$('addRow').onclick = () => {
-  const d = S.load(); d.prizes.push({ id:S.uid(), name:'新獎項', qty:1, remaining:1 }); S.save(d); render();
-  const inputs = $('tbody').querySelectorAll('input[data-f=name]'); const last = inputs[inputs.length-1]; last.focus(); last.select();
-};
+$('addRow').onclick = () => run($('addRow'), () => S.addPrize('新獎項', 1));
 
 /* ---------- 紀錄 ---------- */
-$('undo').onclick = () => {
-  const d = S.load(); const last = d.log[d.log.length-1];
+$('undo').onclick = async () => {
+  const last = V.log[V.log.length-1];
   if (!last){ toast('沒有紀錄可以撤銷'); return; }
   if (!confirm(`撤銷第 ${last.no} 抽「${last.name}」？數量會加回去。`)) return;
-  S.undoLast(); render(); toast('已撤銷');
+  const r = await run($('undo'), () => S.undoLast());
+  if (r && r.committed) toast('已撤銷');
 };
 $('export').onclick = () => {
-  const d = S.load();
-  if (!d.log.length){ toast('還沒有紀錄'); return; }
+  if (!V.log.length){ toast('還沒有紀錄'); return; }
   const wb = XLSX.utils.book_new();
-  const ws1 = XLSX.utils.aoa_to_sheet([['抽次','獎項','時間'], ...d.log.map(l=>[l.no, l.name, new Date(l.time).toLocaleString('zh-TW')])]);
+  const ws1 = XLSX.utils.aoa_to_sheet([['抽次','獎項','時間'], ...V.log.map(l=>[l.no, l.name, new Date(l.time).toLocaleString('zh-TW')])]);
   ws1['!cols']=[{wch:8},{wch:28},{wch:22}];
-  const ws2 = XLSX.utils.aoa_to_sheet([['獎項名稱','總數量','已抽','剩餘'], ...d.prizes.map(p=>[p.name,p.qty,p.qty-p.remaining,p.remaining])]);
+  const ws2 = XLSX.utils.aoa_to_sheet([['獎項名稱','總數量','已抽','剩餘'], ...V.prizes.map(p=>[p.name,p.qty,p.qty-p.remaining,p.remaining])]);
   ws2['!cols']=[{wch:28},{wch:10},{wch:10},{wch:10}];
   XLSX.utils.book_append_sheet(wb, ws1, '抽獎紀錄');
   XLSX.utils.book_append_sheet(wb, ws2, '獎項統計');
   const t = new Date(); const p=n=>String(n).padStart(2,'0');
-  XLSX.writeFile(wb, `扭蛋抽獎紀錄_${t.getFullYear()}${p(t.getMonth()+1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}.xlsx`);
+  XLSX.writeFile(wb, `扭蛋抽獎紀錄_${S.EVENT}_${t.getFullYear()}${p(t.getMonth()+1)}${p(t.getDate())}_${p(t.getHours())}${p(t.getMinutes())}.xlsx`);
 };
-$('resetDraw').onclick = () => {
+$('resetDraw').onclick = async () => {
   if (!confirm('所有獎項數量恢復成總數量，並清空抽獎紀錄。確定嗎？')) return;
-  const d = S.load(); d.prizes.forEach(p=>p.remaining=p.qty); d.log=[]; S.save(d); render(); toast('已重置');
+  const r = await run($('resetDraw'), () => S.resetDraw()); if (r && r.committed) toast('已重置');
 };
-$('wipe').onclick = () => {
-  if (!confirm('清空全部獎項與紀錄？這個動作無法復原。')) return;
-  const d = S.load(); d.prizes=[]; d.log=[]; S.save(d); render(); toast('已清空');
+$('wipe').onclick = async () => {
+  if (!confirm('清空這個活動的全部獎項與紀錄？這個動作無法復原。')) return;
+  const r = await run($('wipe'), () => S.wipe()); if (r && r.committed) toast('已清空');
 };
 
 /* ---------- 設定 ---------- */
-$('saveTitle').onclick = () => {
-  const d = S.load(); d.settings = d.settings || {}; d.settings.title = $('title').value.trim(); S.save(d); toast('標題已更新');
+$('saveTitle').onclick = async () => {
+  const r = await run($('saveTitle'), () => S.setTitle($('title').value.trim())); if (r && r.committed) toast('標題已更新');
 };
 
-/* 執行頁抽獎時即時同步 */
-window.addEventListener('storage', e => { if (e.key === S.KEY) render(); });
-render();
+/* ---------- 啟動 ---------- */
+S.onConnection(on => {
+  const c = $('conn'); c.className = 'conn ' + (on ? 'on' : 'off');
+  c.querySelector('span').textContent = S.LOCAL ? '本機模式' : (on ? '已連線' : '未連線');
+});
+S.subscribe(render);
+S.init().catch(e => { $('loading').textContent = '資料庫連線失敗：' + e.message; });
 </script>
 </body>
 </html>
