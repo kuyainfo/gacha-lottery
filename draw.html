@@ -24,9 +24,9 @@
   #floor{position:absolute;left:0;right:0;bottom:0;height:260px;
     background:radial-gradient(ellipse 760px 120px at 50% 85%, rgba(255,90,90,.18), transparent 70%),
                linear-gradient(to bottom, transparent, rgba(0,0,0,.55));}
-  #bgRays{position:absolute;left:50%;top:52%;width:2400px;height:2400px;margin:-1200px 0 0 -1200px;opacity:.16;
-    background:repeating-conic-gradient(from 0deg, rgba(255,210,120,.55) 0 6deg, transparent 6deg 18deg);
-    -webkit-mask:radial-gradient(circle, #000 0, transparent 60%); mask:radial-gradient(circle, #000 0, transparent 60%);
+  #bgRays{position:absolute;left:50%;top:52%;width:1800px;height:1800px;margin:-900px 0 0 -900px;opacity:.16;border-radius:50%;
+    background:radial-gradient(circle closest-side, rgba(11,3,4,0) 0, rgba(11,3,4,.4) 55%, #0b0304 100%),
+               repeating-conic-gradient(from 0deg, rgba(255,210,120,.55) 0 6deg, transparent 6deg 18deg);
     animation:spin 90s linear infinite}
   .portrait #bgRays{top:42%}
   @keyframes spin{to{transform:rotate(360deg)}}
@@ -48,6 +48,8 @@
   #machine .handle,#machine .jig{transform-box:fill-box;transform-origin:center}
 
   .dragon{position:absolute;bottom:30px;filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));transform-origin:50% 100%}
+  .touch .dragon,.touch .rd{filter:none}
+  .touch #bgRays{animation:none}
   .bob{animation:bob 2.4s ease-in-out infinite}
   .bob2{animation:bob 2.8s ease-in-out -1.2s infinite}
   @keyframes bob{50%{translate:0 -14px}}
@@ -56,10 +58,9 @@
   .portrait #dL{left:10px;bottom:50px;height:470px}
   .portrait #dR{right:0;bottom:50px;height:530px}
 
-  #veil{position:absolute;inset:-1200px;background:radial-gradient(circle at 50% 46%, rgba(40,4,6,.55), rgba(0,0,0,.88));opacity:0;pointer-events:none}
-  #burst{position:absolute;width:1900px;height:1900px;margin:-950px 0 0 -950px;opacity:0;pointer-events:none;
-    background:repeating-conic-gradient(from 0deg, rgba(255,214,110,.9) 0 5deg, transparent 5deg 15deg);
-    -webkit-mask:radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 52%); mask:radial-gradient(circle, #000 0, rgba(0,0,0,.6) 18%, transparent 52%)}
+  #veil{position:absolute;left:0;top:0;width:100%;height:100%;background:radial-gradient(circle at 50% 46%, rgba(40,4,6,.55), rgba(0,0,0,.88));opacity:0;pointer-events:none}
+  #burst{position:absolute;width:1400px;height:1400px;margin:-700px 0 0 -700px;opacity:0;pointer-events:none}
+  #burst svg{width:100%;height:100%;display:block}
   #burst.on{animation:spin 18s linear infinite}
   #glow{position:absolute;width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;opacity:0;pointer-events:none;
     background:radial-gradient(circle, rgba(255,236,170,.95) 0, rgba(255,190,80,.45) 25%, transparent 62%)}
@@ -73,7 +74,7 @@
   #cap .bot::before{content:"";position:absolute;left:0;right:0;top:0;height:7px;background:rgba(0,0,0,.18)}
   #cap .shadow{position:absolute;left:10px;top:150px;width:120px;height:18px;border-radius:50%;background:rgba(0,0,0,.45);filter:blur(6px)}
 
-  #flash{position:absolute;inset:-1200px;background:#fff8e2;opacity:0;pointer-events:none}
+  #flash{position:absolute;left:0;top:0;width:100%;height:100%;background:#fff8e2;opacity:0;pointer-events:none}
 
   #card{position:absolute;left:50%;top:520px;width:1040px;margin-left:-520px;transform:translateY(-50%) scale(.2);opacity:0;pointer-events:none;
     padding:48px 60px 54px;border-radius:40px;text-align:center;
@@ -205,6 +206,7 @@ const A = n => `assets/${n}.webp`;
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const rand = (a,b) => a + Math.random()*(b-a);
 const TOUCH = matchMedia('(pointer:coarse)').matches;
+if (TOUCH) stage.classList.add('touch');
 
 /* ---------- 版面：橫式 16:9（電腦／投影）、直式 9:16（手機） ---------- */
 const LAYOUTS = {
@@ -227,6 +229,7 @@ function fit(){
   const SW = Math.max(L.W, Math.round(L.H * iw / ih)), SH = Math.max(L.H, Math.round(L.W * ih / iw));
   stage.style.width = SW + 'px'; stage.style.height = SH + 'px';
   const ct = $('content'); ct.style.left = ((SW - L.W) / 2) + 'px'; ct.style.top = ((SH - L.H) / 2) + 'px';
+  for (const id of ['veil','flash']){ const el = $(id); el.style.left = (-(SW - L.W) / 2) + 'px'; el.style.top = (-(SH - L.H) / 2) + 'px'; el.style.width = SW + 'px'; el.style.height = SH + 'px'; }
   const s = Math.min(iw / SW, ih / SH);
   stage.style.transform = `translate(-50%,-50%) scale(${s})`;
 }
@@ -267,6 +270,18 @@ const pile = $('pile');
       outer.appendChild(inner); pile.appendChild(outer);
     }
   }
+})();
+
+/* ---------- 開獎光芒（SVG 扇形 + 放射漸層，比 CSS mask 省記憶體） ---------- */
+(function(){
+  const R = 700; let paths = '';
+  for (let i=0;i<24;i++){
+    const a1 = (i*15) * Math.PI/180, a2 = (i*15+6) * Math.PI/180;
+    paths += `<path d="M0 0 L${(R*Math.cos(a1)).toFixed(1)} ${(R*Math.sin(a1)).toFixed(1)} L${(R*Math.cos(a2)).toFixed(1)} ${(R*Math.sin(a2)).toFixed(1)} Z"/>`;
+  }
+  $('burst').innerHTML = `<svg viewBox="-700 -700 1400 1400"><defs><radialGradient id="gBurst" cx="0" cy="0" r="700" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="#ffd66e" stop-opacity=".95"/><stop offset=".35" stop-color="#ffd66e" stop-opacity=".5"/><stop offset="1" stop-color="#ffd66e" stop-opacity="0"/>
+    </radialGradient></defs><g fill="url(#gBurst)">${paths}</g></svg>`;
 })();
 
 /* ---------- 彩帶 ---------- */
