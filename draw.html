@@ -84,7 +84,6 @@
   #card .lead{font-size:52px;font-weight:900;letter-spacing:.3em;color:#ffd977;margin-bottom:16px;text-indent:.3em}
   #card .name{font-size:150px;line-height:1.18;font-weight:900;color:#fff;word-break:break-word;
     text-shadow:0 6px 0 rgba(0,0,0,.35), 0 0 40px rgba(255,210,120,.5)}
-  #card .no{margin-top:22px;font-size:26px;color:rgba(255,230,190,.7);letter-spacing:.2em}
   .rd{position:absolute;bottom:-30px;height:660px;opacity:0;filter:drop-shadow(0 18px 30px rgba(0,0,0,.6));pointer-events:none}
   #rL{left:-10px} #rR{right:-10px}
   .portrait .rd{height:640px;bottom:-20px}
@@ -184,7 +183,7 @@
   <img id="rL" class="rd" src="assets/lucky_open.webp" alt="">
   <img id="rR" class="rd" src="assets/lucky_thumbs.webp" alt="">
 
-  <div id="card"><div class="lead">恭喜獲得</div><div class="name" id="prizeName"></div><div class="no" id="drawNo"></div></div>
+  <div id="card"><div class="lead">恭喜獲得</div><div class="name" id="prizeName"></div></div>
   <div id="next">點一下繼續</div>
 
   <div id="cap"><div class="shadow"></div><div class="half bot"></div><div class="half top"></div></div>
@@ -412,7 +411,6 @@ async function play(){
   cap.querySelector('.bot').animate([{transform:'none',opacity:1},{transform:'translate(40px,200px) rotate(35deg)',opacity:0}],{duration:650,easing:'cubic-bezier(.4,0,.7,.4)',fill:'forwards'});
   $('burst').classList.add('on'); fade($('burst'), 1, 500); fade($('glow'), .9, 300);
   $('prizeName').textContent = prize.name;
-  $('drawNo').textContent = `第 ${entry.no} 抽`;
   card.animate([{opacity:0, transform:'translateY(-50%) scale(.2)'},{opacity:1, transform:'translateY(-50%) scale(1.08)', offset:.7},{opacity:1, transform:'translateY(-50%) scale(1)'}],
     {duration:620, easing:'cubic-bezier(.2,.8,.3,1.2)', fill:'forwards'});
   fitName($('prizeName'));
