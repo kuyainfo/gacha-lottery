@@ -198,7 +198,8 @@ function pageUrl(file, ev){
 }
 (function setupLinks(){
   $('evCode').textContent = S.EVENT + (S.LOCAL ? '（本機測試模式）' : '');
-  const url = pageUrl('draw.html', S.EVENT);
+  const du = new URL(pageUrl('draw.html', S.EVENT)); du.searchParams.set('openExternalBrowser','1');   /* LINE 點開時強制跳外部瀏覽器 */
+  const url = du.href;
   $('drawUrl').textContent = url;
   $('openDraw').href = url;
   try{
